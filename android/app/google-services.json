@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "381855177010",
+    "project_id": "pregnancy-tracker-app-b89d3",
+    "storage_bucket": "pregnancy-tracker-app-b89d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381855177010:android:21f1173a32cf2688c81f2b",
+        "android_client_info": {
+          "package_name": "com.pavewaygroup.pregnancytrackerapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "381855177010-8lo3hfetlkm4jfk35qlbq2ccd86bkdlg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCidTn1cNhgA6Th5E5Ydar_6yt3LZiPr6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "381855177010-8lo3hfetlkm4jfk35qlbq2ccd86bkdlg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

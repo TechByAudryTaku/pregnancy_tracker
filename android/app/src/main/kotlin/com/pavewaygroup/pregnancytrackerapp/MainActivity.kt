@@ -1,4 +1,4 @@
-package com.example.pregnancy_tracker_app
+package com.pavewaygroup.pregnancytrackerapp
 
 import io.flutter.embedding.android.FlutterActivity
 
