@@ -1,4 +1,8 @@
+import 'dart:ffi';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:pregnancytrackerapp/common/theme_helper.dart';
 import 'package:pregnancytrackerapp/pages/widgets/header_widget.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -19,13 +23,25 @@ class AccountSetupPage extends StatefulWidget {
 }
 
 class _AccountSetupPageState extends State<AccountSetupPage> {
-  final _formKey = GlobalKey<FormState>();
+  User? _user;
+  int _weeksPregnant = 0;
   bool checkedValue = false;
   bool checkboxValue = false;
+  final Logger _logger = Logger(printer: PrettyPrinter());
+  final _formKey = GlobalKey<FormState>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _dueDateController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
   final TextEditingController _lastPeriodController = TextEditingController();
+
+  @override
+  void initState() {
+    _user = _auth.currentUser;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +106,7 @@ class _AccountSetupPageState extends State<AccountSetupPage> {
                         Container(
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                           child: TextFormField(
-                            obscureText: true,
+                            controller: _cityController,
                             decoration: ThemeHelper().textInputDecoration(
                                 "City/Village", "Enter your city/village"),
                             validator: (val) {
@@ -185,8 +201,18 @@ class _AccountSetupPageState extends State<AccountSetupPage> {
                                   _dueDateController.text = rawDate
                                       .add(days: 280)
                                       .format("dd MMM yyyy");
-                                  print("Weeks: " +
-                                      rawDate.add(days: 280).format("w"));
+
+                                  DateTime currentData = DateTime.now();
+
+                                  int remainingDays = 280 -
+                                      ((currentData
+                                              .difference(pickedDate)
+                                              .inDays) +
+                                          1);
+                                  int weeksLeft = remainingDays ~/ 7;
+                                  setState(() {
+                                    _weeksPregnant = 40 - weeksLeft;
+                                  });
                                 });
                               } else {}
                             },
@@ -228,9 +254,9 @@ class _AccountSetupPageState extends State<AccountSetupPage> {
                           "Congratulations!",
                           style: TextStyle(color: Colors.grey),
                         ),
-                        const Text(
-                          "You're 3 Weeks pregnant",
-                          style: TextStyle(color: Colors.grey),
+                        Text(
+                          "You're $_weeksPregnant Weeks pregnant",
+                          style: const TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(height: 30.0),
                         Container(
@@ -250,13 +276,7 @@ class _AccountSetupPageState extends State<AccountSetupPage> {
                               ),
                             ),
                             onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ProfilePage()),
-                                    (Route<dynamic> route) => false);
-                              }
+                              _submit();
                             },
                           ),
                         ),
@@ -270,5 +290,31 @@ class _AccountSetupPageState extends State<AccountSetupPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      final user = <String, dynamic>{
+        "phoneNumber": _phoneController.text.toString(),
+        "birthday": _birthdayController.text.toString(),
+        "city": _cityController.text.toString(),
+        "dueDate": _dueDateController.text.toString(),
+        "lastPeriod": _lastPeriodController.text.toString()
+      };
+
+      try {
+        print(_user?.uid);
+        // save user details in firestore
+        await _firestore.collection("users").doc(_user?.uid).set(user);
+        _logger.i("Success");
+        setState(() {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+              (Route<dynamic> route) => false);
+        });
+      } catch (e) {
+        _logger.d("error_message", e);
+      }
+    }
   }
 }

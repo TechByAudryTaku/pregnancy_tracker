@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:pregnancytrackerapp/common/theme_helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -19,9 +20,11 @@ class _LoginPageState extends State<LoginPage> {
   final double _headerHeight = 250;
   bool _emailValidate = false;
   bool _passwordValidate = false;
+  final _auth = FirebaseAuth.instance;
+  final Logger _logger = Logger(printer: PrettyPrinter());
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final Key _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -103,31 +106,19 @@ class _LoginPageState extends State<LoginPage> {
                                     ThemeHelper().buttonBoxDecoration(context),
                                 child: ElevatedButton(
                                   style: ThemeHelper().buttonStyle(),
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        40, 10, 40, 10),
+                                  child: const Padding(
+                                    padding:
+                                        EdgeInsets.fromLTRB(40, 10, 40, 10),
                                     child: Text(
-                                      'Sign In'.toUpperCase(),
-                                      style: const TextStyle(
+                                      'Sign In',
+                                      style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white),
                                     ),
                                   ),
                                   onPressed: () {
-                                    //After successful login we will redirect to profile page. Let's create profile page now
-                                    if (_emailController.text.isEmpty &&
-                                        _passwordController.text.isEmpty) {
-                                      setState(() {
-                                        _emailValidate = true;
-                                        _passwordValidate = true;
-                                      });
-                                    }
-                                    // Navigator.pushReplacement(
-                                    //     context,
-                                    //     MaterialPageRoute(
-                                    //         builder: (context) =>
-                                    //             const ProfilePage()));
+                                    _login();
                                   },
                                 ),
                               ),
@@ -163,5 +154,30 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _login() async {
+    try {
+      if (_formKey.currentState!.validate()) {
+        // Attempt user login with email and password
+        final credential = await _auth.signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.toString());
+        _logger.i("FirebaseUser", credential.user);
+        setState(() {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()));
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        _logger.d("FirebaseAuthException: ", 'No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        _logger.d("FirebaseAuthException: ",
+            "Wrong password provided for that user.");
+      }
+    } catch (e) {
+      _logger.e("Unknown Error", e);
+    }
   }
 }

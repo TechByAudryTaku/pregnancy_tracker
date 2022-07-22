@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
             true; // Now it is showing fade effect and navigating to Login page
       });
     });
-
+    FirebaseAuth.instance.signOut();
     _checkAuthState();
   }
 
